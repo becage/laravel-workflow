@@ -15,7 +15,7 @@ Add a ServiceProvider to your providers array in `config/app.php`:
 
 'providers' => [
     ...
-    Brexis\LaravelWorkflow\WorkflowServiceProvider::class,
+    Cage\LaravelWorkflow\WorkflowServiceProvider::class,
 
 ]
 ```
@@ -25,7 +25,7 @@ Add the `Workflow` facade to your facades array:
 ```php
 <?php
     ...
-    'Workflow' => Brexis\LaravelWorkflow\Facades\WorkflowFacade::class,
+    'Workflow' => Cage\LaravelWorkflow\Facades\WorkflowFacade::class,
 ```
 
 ### Configuration
@@ -33,7 +33,7 @@ Add the `Workflow` facade to your facades array:
 Publish the config file
 
 ```
-    php artisan vendor:publish --provider="Brexis\LaravelWorkflow\WorkflowServiceProvider"
+    php artisan vendor:publish --provider="Cage\LaravelWorkflow\WorkflowServiceProvider"
 ```
 
 Configure your workflow in `config/workflow.php`
@@ -76,7 +76,7 @@ Use the `WorkflowTrait` inside supported classes
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
-use Brexis\LaravelWorkflow\Traits\WorkflowTrait;
+use Cage\LaravelWorkflow\Traits\WorkflowTrait;
 
 class BlogPost extends Model
 {
@@ -127,11 +127,11 @@ $post->save();
 This package provides a list of events fired during a transition
 
 ```php
-    Brexis\LaravelWorkflow\Events\Guard
-    Brexis\LaravelWorkflow\Events\Leave
-    Brexis\LaravelWorkflow\Events\Transition
-    Brexis\LaravelWorkflow\Events\Enter
-    Brexis\LaravelWorkflow\Events\Entered
+    Cage\LaravelWorkflow\Events\Guard
+    Cage\LaravelWorkflow\Events\Leave
+    Cage\LaravelWorkflow\Events\Transition
+    Cage\LaravelWorkflow\Events\Enter
+    Cage\LaravelWorkflow\Events\Entered
 ```
 
 You can subscribe to an event
@@ -141,7 +141,7 @@ You can subscribe to an event
 
 namespace App\Listeners;
 
-use Brexis\LaravelWorkflow\Events\GuardEvent;
+use Cage\LaravelWorkflow\Events\GuardEvent;
 
 class BlogPostWorkflowSubscriber
 {
@@ -190,27 +190,27 @@ class BlogPostWorkflowSubscriber
     public function subscribe($events)
     {
         $events->listen(
-            'Brexis\LaravelWorkflow\Events\GuardEvent',
+            'Cage\LaravelWorkflow\Events\GuardEvent',
             'App\Listeners\BlogPostWorkflowSubscriber@onGuard'
         );
 
         $events->listen(
-            'Brexis\LaravelWorkflow\Events\LeaveEvent',
+            'Cage\LaravelWorkflow\Events\LeaveEvent',
             'App\Listeners\BlogPostWorkflowSubscriber@onLeave'
         );
 
         $events->listen(
-            'Brexis\LaravelWorkflow\Events\TransitionEvent',
+            'Cage\LaravelWorkflow\Events\TransitionEvent',
             'App\Listeners\BlogPostWorkflowSubscriber@onTransition'
         );
 
         $events->listen(
-            'Brexis\LaravelWorkflow\Events\EnterEvent',
+            'Cage\LaravelWorkflow\Events\EnterEvent',
             'App\Listeners\BlogPostWorkflowSubscriber@onEnter'
         );
 
         $events->listen(
-            'Brexis\LaravelWorkflow\Events\EnteredEvent',
+            'Cage\LaravelWorkflow\Events\EnteredEvent',
             'App\Listeners\BlogPostWorkflowSubscriber@onEntered'
         );
     }

@@ -1,6 +1,6 @@
 <?php
 
-namespace Brexis\LaravelWorkflow\Events;
+namespace Cage\LaravelWorkflow\Events;
 
 use Symfony\Component\Workflow\Event\GuardEvent as SymfonyGuardEvent;
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace Brexis\LaravelWorkflow\Events;
+namespace Cage\LaravelWorkflow\Events;
 
 /**
  * @author Peter Sweets <p.sweets@developers.nl>
