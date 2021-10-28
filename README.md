@@ -1,33 +1,12 @@
-# Laravel workflow [![Build Status](https://travis-ci.org/brexis/laravel-workflow.svg?branch=1.3.3)](https://travis-ci.org/brexis/laravel-workflow)
+# Laravel workflow [![Build Status](https://cdn.learnku.com/uploads/images/202110/28/27889/qBmRZutSjj.svg)](https://github.com/becage/laravel-workflow)
 
-Use the Symfony Workflow component in Laravel
+Use the Symfony Workflow component in Laravel8,PHP7,PHP8
+This repository based on @brexis,his project since 2019-09 No longer maintained.
+So i modify the code and publish it.
 
 ### Installation
 
-    composer require brexis/laravel-workflow
-
-#### For laravel <= 5.4
-
-Add a ServiceProvider to your providers array in `config/app.php`:
-
-```php
-<?php
-
-'providers' => [
-    ...
-    Cage\LaravelWorkflow\WorkflowServiceProvider::class,
-
-]
-```
-
-Add the `Workflow` facade to your facades array:
-
-```php
-<?php
-    ...
-    'Workflow' => Cage\LaravelWorkflow\Facades\WorkflowFacade::class,
-```
-
+    composer require cage/laravel-workflow
 ### Configuration
 
 Publish the config file
@@ -38,41 +17,10 @@ Publish the config file
 
 Configure your workflow in `config/workflow.php`
 
-```php
-<?php
-
-return [
-    'straight'   => [
-        'type'          => 'workflow', // or 'state_machine'
-        'marking_store' => [
-            'type'      => 'multiple_state',
-            'arguments' => ['currentPlace']
-        ],
-        'supports'      => ['App\BlogPost'],
-        'places'        => ['draft', 'review', 'rejected', 'published'],
-        'transitions'   => [
-            'to_review' => [
-                'from' => 'draft',
-                'to'   => 'review'
-            ],
-            'publish' => [
-                'from' => 'review',
-                'to'   => 'published'
-            ],
-            'reject' => [
-                'from' => 'review',
-                'to'   => 'rejected'
-            ]
-        ],
-    ]
-];
-```
-
 Use the `WorkflowTrait` inside supported classes
 
 ```php
 <?php
-
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
@@ -81,7 +29,6 @@ use Cage\LaravelWorkflow\Traits\WorkflowTrait;
 class BlogPost extends Model
 {
   use WorkflowTrait;
-
 }
 ```
 ### Usage
@@ -89,53 +36,32 @@ class BlogPost extends Model
 ```php
 <?php
 
-use App\BlogPost;
+use App\Models\BlogPost;
 use Workflow;
 
-$post = BlogPost::find(1);
-$workflow = Workflow::get($post);
-// if more than one workflow is defined for the BlogPost class
-$workflow = Workflow::get($post, $workflowName);
-
-$workflow->can($post, 'publish'); // False
+$post        = BlogPost::find(1);
+$workflow    = $post->workflow_get();// or $workflow = Workflow::get($post);
+$workflow->can($post, 'publish'); //  False
 $workflow->can($post, 'to_review'); // True
-$transitions = $workflow->getEnabledTransitions($post);
+$transitions = $workflow->getEnabledTransitions($post);// Get the transitions
+$definition  = $workflow->getDefinition();// Get the definition
+$places      = $workflow->getMarking($post)->getPlaces();// // Get the current places
+$metadata    = $workflow->getMetadataStore();// Get the metadata
 
 // Apply a transition
 $workflow->apply($post, 'to_review');
 $post->save(); // Don't forget to persist the state
-
-// Using the WorkflowTrait
-$post->workflow_can('publish'); // True
-$post->workflow_can('to_review'); // False
-
-// Get the post transitions
-foreach ($post->workflow_transitions() as $transition) {
-    echo $transition->getName();
-}
-// if more than one workflow is defined for the BlogPost class
-foreach ($post->workflow_transitions($workflowName) as $transition) {
-    echo $transition->getName();
-}
-
-// Apply a transition
-$post->workflow_apply('publish');
-$post->save();
 ```
 
 ### Use the events
-This package provides a list of events fired during a transition
-
+Register at `app/Providers/EventServiceProvider.php`
 ```php
-    Cage\LaravelWorkflow\Events\Guard
-    Cage\LaravelWorkflow\Events\Leave
-    Cage\LaravelWorkflow\Events\Transition
-    Cage\LaravelWorkflow\Events\Enter
-    Cage\LaravelWorkflow\Events\Entered
+protected $subscribe = [
+        BlogPostWorkflowSubscriber::class,
+    ];
 ```
-
-You can subscribe to an event
-
+Then you can subscribe to an event
+Create Listener at `app/Listeners/BlogPostWorkflowSubscriber.php`
 ```php
 <?php
 
@@ -145,48 +71,20 @@ use Cage\LaravelWorkflow\Events\GuardEvent;
 
 class BlogPostWorkflowSubscriber
 {
-    /**
-     * Handle workflow guard events.
-     */
-    public function onGuard(GuardEvent $event) {
-        /** Symfony\Component\Workflow\Event\GuardEvent */
-        $originalEvent = $event->getOriginalEvent();
+    public function onGuard(GuardEvent $event){}
 
-        /** @var App\BlogPost $post */
-        $post = $originalEvent->getSubject();
-        $title = $post->title;
-
-        if (empty($title)) {
-            // Posts with no title should not be allowed
-            $originalEvent->setBlocked(true);
-        }
+    public function onLeave($event)
+    {
+        // The event can also proxy to the original event
+        $subject = $event->getOriginalEvent()->getSubject();
     }
 
-    /**
-     * Handle workflow leave event.
-     */
-    public function onLeave($event) {}
-
-    /**
-     * Handle workflow transition event.
-     */
     public function onTransition($event) {}
 
-    /**
-     * Handle workflow enter event.
-     */
     public function onEnter($event) {}
 
-    /**
-     * Handle workflow entered event.
-     */
     public function onEntered($event) {}
 
-    /**
-     * Register the listeners for the subscriber.
-     *
-     * @param  Illuminate\Events\Dispatcher  $events
-     */
     public function subscribe($events)
     {
         $events->listen(
@@ -221,8 +119,10 @@ class BlogPostWorkflowSubscriber
 ### Dump Workflows
 Symfony workflow uses GraphvizDumper to create the workflow image. You may need to install the `dot` command of [Graphviz](http://www.graphviz.org/)
 
-    php artisan workflow:dump workflow_name --class App\\BlogPost
+```php
+php artisan workflow:dump straight --class App\\Models\\BlogPost --path workflows  --format=svg
+```
 
-You can change the image format with the `--format` option. By default the format is png.
-
-    php artisan workflow:dump workflow_name --format=jpg
+### For More Information
+`https://symfony.com/doc/current/workflow.html`
+`https://github.com/brexis/laravel-workflow`
